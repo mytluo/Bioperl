@@ -1,0 +1,30 @@
+# Write a subroutine that returns a reference to a hash. Write a script that (a) declares a reference to this function, (b) calls the function via the reference, and (c) prints out the hash whose reference is returned from the subroutine. 10 points
+
+package HASH;
+
+use strict;
+use warnings;
+
+use Exporter 'import';
+our @EXPORT_OK = ("return_hash");
+
+sub return_hash {
+	my %tower = qw(Cayde-6 Exo
+			IkoraRey Human
+			Zavala Awoken);
+	return \%tower;
+}
+
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use HASH("return_hash");
+
+my %action = ("hash" => \&HASH::return_hash);
+
+my $hashref = $action{"hash"}->();
+
+foreach (keys %$hashref) {
+	print "$_: $hashref->{$_}\n"
+}

@@ -1,0 +1,27 @@
+Write two functions max_num() and min_num() that, when passed a list of numbers, return the largest and smallest items, respectively. 10 points
+
+printf ("max: %d\n", max_num(\@list));
+printf ("min: %d\n", min_num(\@list));
+
+sub max_num {
+	my @nums = @{$_[0]};
+	my $max = $nums[0];
+	foreach my $i (@nums) {
+		if ($i > $max) {
+			$max = $i;
+		}
+	}
+	return $max;
+}
+
+sub min_num {
+	my @nums = @{$_[0]};
+	my $min = $nums[0];
+	foreach my $i (@nums) {
+		if ($i < $min) {
+			$min = $i;
+		}
+	}
+	return $min;
+}
+

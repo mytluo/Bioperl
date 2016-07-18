@@ -1,0 +1,11 @@
+#Write a shell script that uses a for loop to move a set of files from one directory to another. 10 points
+
+#!/bin/sh
+
+cd /path/to/sourceDirectory
+
+for f in $(ls); do
+	mv "$f" /path/to/destination
+done
+
+#(for specific files: for f in *.extension)

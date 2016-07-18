@@ -1,0 +1,25 @@
+# Write a program to compute the annealing temperature of an oligomer (2 degrees C per A or T; 4 degrees C per C or G). In addition to the annealing temp, the program should also output the GC content of the oligo -- i.e., what percent of bases in the oligo are G or C. 10 points
+
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use constant AT => 2;
+use constant GC => 4;
+
+my ($temp, $GC) = anneal_temp($oligomer);
+printf ("%s\nAnnealing temperature: %d°C\nGC content: %d%%\n", $oligomer, $temp, $GC);
+
+sub anneal_temp {
+	my $DNAseq = $_[0];
+	my $GC_count = 0;
+	my $seqlen = length($DNAseq);
+	foreach my $base (split //, $DNAseq) {
+		if ($base =~ /[GC]/) {
+			$GC_count++;
+		}
+	}
+	my $temp = ($GC_count * GC) + (($seqlen - $GC_count) * AT);
+	return ($temp, ($GC_count/$seqlen * 100));
+}

@@ -1,0 +1,10 @@
+Write a regular expression that will match a target string consisting only of an integer number. Write one that will match a string containing only an integer or a decimal number. Write one that will match a string containing a positive or negative integer or decimal number. Write one that will match a string containing only a positive or negative number in scientific notation (e.g., -3.5e6). 10 points
+
+only an integer number: 		
+	/^[\d]+$/
+only integer or decimal number: 		
+	/^[\d]+(\.[\d]+)?$/
+positive or negative integer or decimal number:			
+	/^([-]?[\d]+)(\.?[\d]+)?$/
+scientific notation:		
+	/^[-]?[\d]+(\.[\d]+)?[Ee][-]?[\d]+$/
