@@ -34,8 +34,8 @@ sub display_results {
   my $query = $q->param('acc');
   my $format = $q->param('format');
   my $blast = $q->param('blast');
-  print "<p>Accession: $query</p>";
-  $q->p(search($query, $format, $blast));
+  print $q->h2("Accession: $query");
+  $q->p(search($query, $format, $blast)); 
   output_form($q);
 }
 
@@ -71,51 +71,58 @@ sub search {
   my $format = $_[1];
   my $blast = $_[2];
   my $s;
-  if ($format eq 'GenBank (full)') {
+
+  if ($format eq 'GenBank (full)') { # fetch GenBank flat file (unformatted)
 	  $s = get("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=protein&id=$acc&rettype=gp");
-  } else {
+  } else { # fetch FASTA file
   	  $s = get("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=protein&id=$acc&rettype=fasta");	
   }
   die "couldn't get GenBank file!" unless defined $s;
   print "<font face='Courier'>$s\n</font>";
   my $gbh = Bio::DB::GenBank->new(-format => 'fasta');
   my $seq = $gbh->get_Seq_by_id( $acc );
-  if (!database_search($acc)) {
+  if (!database_search($acc)) { #if accession number does not already exist in database
+
 	my $id = $seq->display_name;
 	my $desc = $seq->desc;
 	my $fullseq = $seq->seq;
 	my $type = $seq->alphabet;
 	my $len = $seq->length;
 	my $def = ">$id$desc";
-	database_entry($acc, $def, $len, $type, $fullseq);
+	database_entry($acc, $def, $len, $type, $fullseq); #add accession and related info to accessions table
   }
-  if ($blast) {
+  if ($blast) { #if BLAST run selected
   	my $prog = $blast;
-  	my $factory = Bio::Tools::Run::RemoteBlast->new(
-  		-prog => $prog, -data => 'nr', -expect => '1e-10', -readmethod => 'SearchIO');
-  	$factory->submit_blast($acc);
-  	while (my @rids = $factory->each_rid) {
-  		foreach my $rid (@rids) {
-  			my $result = $factory->retrieve_blast($rid);
-  			if (ref($result)) {
-  				my $output = $result->next_result();
-  				$factory->remove_rid($rid);
-  				foreach my $hit($output->hits) {
-  					my $res_acc = $hit->accession;
-  					my $desc = $hit->description;
-  					my $hsp = $hit->hsp;
-  					my $evalue = $hsp->evalue;
-  					my $id = $hsp->percent_identity;
- 					blast_database($acc, $prog, $res_acc, $desc, $evalue, $id);
-  				}
-  			}
-  		}
-  	
-  	}
+  	if (!blast_search($acc, $prog)) { #if BLAST results not already in database
+	  	my $factory = Bio::Tools::Run::RemoteBlast->new(
+	  		-prog => $prog, -data => 'nr', -expect => '1e-10', -readmethod => 'SearchIO');
+	  	$factory->submit_blast($acc);
+	  	while (my @rids = $factory->each_rid) {
+	  		foreach my $rid (@rids) {
+	  			my $result = $factory->retrieve_blast($rid);
+	  			if (ref($result)) {
+	  				my $output = $result->next_result();
+	  				$factory->remove_rid($rid);
+	  				foreach my $hit($output->hits) {
+	  					my $res_acc = $hit->accession;
+	  					my $desc = $hit->description;
+	  					my $hsp = $hit->hsp;
+	  					my $evalue = $hsp->evalue;
+	  					my $id = $hsp->percent_identity;
+	  					#add BLAST results to blast_results table
+	 					blast_database($acc, $prog, $res_acc, $desc, $evalue, $id); 
+	  				}
+	  			}
+	  		}
+	  	
+	  	}
+	}
+	blast_search($acc, $prog); #print results to user
   }
 }
 
 sub blast_database {
+	# adds specific BLAST results of the queried accession to table blast_results
 	my $query_acc = $_[0];
 	my $prog = $_[1];
 	my $res_acc = $_[2];
@@ -144,23 +151,29 @@ sub blast_database {
 }
 
 sub blast_search {
+	# search blast_results for existing entry given the query accession and BLAST program
 	my $query_acc = $_[0];
 	my $prog = $_[1];
 	my $dbh = DBI->connect( "DBI:SQLite:final.db", {RaiseError => 1} ) 
 		or die "Cannot connect: $DBI::errstr";
 	my $sel = $dbh->prepare("SELECT res_acc, desc, evalue, id FROM blast_results WHERE accession = ? AND blast_prog = ?");
 	$sel->execute($query_acc, $prog);
+	my $count = 0;
 	print "<p>$prog results for $query_acc:</p>";
-	while (my @row = $sel->fetchrow_array()) {
+	while (my @row = $sel->fetchrow_arrayref()) {
 		print "<p>Accession: $row[0]</p>
 			<p>Description: $row[1]</p>
 			<p>E-value: $row[2]</p>
 			<p>%Identity: $row[3]</p>";
+		$count++;
+	} unless ($count) {
+		return 0;
 	}
 	$dbh->disconnect;
 }
 
 sub database_search {
+	# search accessions for existing entry given the query accession
 	my $acc = $_[0];
 	my $dbh = DBI->connect( "DBI:SQLite:final.db", {RaiseError => 1} ) 
 		or die "Cannot connect: $DBI::errstr";
@@ -176,6 +189,7 @@ sub database_search {
 }
 
 sub database_entry {
+	# adds accession entry to accessions if it does not exist in table already
 	my $acce = $_[0];
 	my $def = $_[1];
 	my $len = $_[2];
