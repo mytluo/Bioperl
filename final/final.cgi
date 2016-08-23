@@ -81,7 +81,7 @@ sub search {
   print "<font face='Courier'>$s\n</font>";
   my $gbh = Bio::DB::GenBank->new(-format => 'fasta');
   my $seq = $gbh->get_Seq_by_id( $acc );
-  if (!database_search($acc)) { #if accession number does not already exist in database
+  if (database_search($acc) == 0) { #if accession number does not already exist in database
 
 	my $id = $seq->display_name;
 	my $desc = $seq->desc;
@@ -93,7 +93,7 @@ sub search {
   }
   if ($blast) { #if BLAST run selected
   	my $prog = $blast;
-  	if (!blast_search($acc, $prog)) { #if BLAST results not already in database
+  	if (blast_search($acc, $prog) == 0) { #if BLAST results not already in database
 	  	my $factory = Bio::Tools::Run::RemoteBlast->new(
 	  		-prog => $prog, -data => 'nr', -expect => '1e-10', -readmethod => 'SearchIO');
 	  	$factory->submit_blast($acc);
