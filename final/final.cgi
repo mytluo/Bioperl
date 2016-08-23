@@ -156,7 +156,7 @@ sub blast_search {
 	my $prog = $_[1];
 	my $dbh = DBI->connect( "DBI:SQLite:final.db", {RaiseError => 1} ) 
 		or die "Cannot connect: $DBI::errstr";
-	my $sel = $dbh->prepare("SELECT res_acc, desc, evalue, id FROM blast_results WHERE accession = ? AND blast_prog = ?");
+	my $sel = $dbh->prepare("SELECT result_acc, result_desc, evalue, percent_id FROM blast_results WHERE accession = ? AND blast_prog = ?");
 	$sel->execute($query_acc, $prog);
 	my $count = 0;
 	print "<p>$prog results for $query_acc:</p>";
