@@ -139,7 +139,7 @@ sub blast_database {
 		evalue INT NOT NULL,
 		percent_id INT NOT NULL););
 	my $rv = $dbh->do($sth);
-	my $sql = $dbh->prepare("INSERT OR IGNORE INTO accessions VALUES (?, ?, ?, ?, ?, ?)");
+	my $sql = $dbh->prepare("INSERT OR IGNORE INTO blast_results VALUES (?, ?, ?, ?, ?, ?)");
 	$sql->bind_param(1, $query_acc);
 	$sql->bind_param(2, $prog);
 	$sql->bind_param(3, $res_acc);
